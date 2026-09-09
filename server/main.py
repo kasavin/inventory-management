@@ -1,3 +1,4 @@
+import threading
 from datetime import date, timedelta
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -6,6 +7,9 @@ from pydantic import BaseModel, Field
 from mock_data import inventory_items, orders, demand_forecasts, backlog_items, spending_summary, monthly_spending, category_spending, recent_transactions, purchase_orders, restock_orders
 
 app = FastAPI(title="Factory Inventory Management System")
+
+# Serializes numbering and storing restock orders (see create_restock_order).
+restock_orders_lock = threading.Lock()
 
 # Quarter mapping for date filtering
 QUARTER_MAP = {
@@ -231,18 +235,22 @@ def create_restock_order(request: CreateRestockOrderRequest):
     # The order is delivered as one shipment, so it waits for its slowest line.
     lead_time_days = max(item["lead_time_days"] for item in lines)
     created = date.today()
-    number = len(restock_orders) + 1
-    order = {
-        "id": str(number),
-        "order_number": f"RST-{created.year}-{number:04d}",
-        "created_date": created.isoformat(),
-        "status": "Submitted",
-        "lines": lines,
-        "total_cost": round(sum(item["line_total"] for item in lines), 2),
-        "lead_time_days": lead_time_days,
-        "expected_delivery": (created + timedelta(days=lead_time_days)).isoformat(),
-    }
-    restock_orders.append(order)
+    # Sync handlers run in FastAPI's thread pool, so two submits can overlap.
+    # Holding the lock from reading the list length to appending keeps order
+    # numbers unique.
+    with restock_orders_lock:
+        number = len(restock_orders) + 1
+        order = {
+            "id": str(number),
+            "order_number": f"RST-{created.year}-{number:04d}",
+            "created_date": created.isoformat(),
+            "status": "Submitted",
+            "lines": lines,
+            "total_cost": round(sum(item["line_total"] for item in lines), 2),
+            "lead_time_days": lead_time_days,
+            "expected_delivery": (created + timedelta(days=lead_time_days)).isoformat(),
+        }
+        restock_orders.append(order)
     return order
 
 @app.get("/api/backlog", response_model=List[BacklogItem])
