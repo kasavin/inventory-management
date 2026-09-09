@@ -1,6 +1,7 @@
 """
 Pytest configuration and fixtures for backend API tests.
 """
+import copy
 import sys
 from pathlib import Path
 
@@ -12,6 +13,7 @@ server_path = Path(__file__).parent.parent.parent / "server"
 sys.path.insert(0, str(server_path))
 
 from main import app
+import mock_data
 
 
 @pytest.fixture
@@ -19,6 +21,16 @@ def client():
     """Create a test client for the FastAPI application."""
     with TestClient(app) as test_client:
         yield test_client
+
+
+@pytest.fixture(autouse=True)
+def reset_restock_orders():
+    """Keep tests independent: POST /api/restock-orders appends to a module-level list."""
+    saved = copy.deepcopy(mock_data.restock_orders)
+    yield
+    # Restore in place: main.py imported this same list object, so rebinding
+    # mock_data.restock_orders to a new list would leave the API on the old one.
+    mock_data.restock_orders[:] = saved
 
 
 @pytest.fixture
