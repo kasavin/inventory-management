@@ -52,8 +52,10 @@ npm install && npm run dev
 - `GET /api/inventory` - Filters: warehouse, category
 - `GET /api/orders` - Filters: warehouse, category, status, month
 - `GET /api/dashboard/summary` - All filters
-- `GET /api/demand`, `/api/backlog` - No filters
+- `GET /api/demand`, `/api/backlog` - No filters (demand records include `unit_cost` and `lead_time_days`)
 - `GET /api/spending/*` - Summary, monthly, categories, transactions
+- `GET /api/restock-orders` - Submitted restocking orders, newest first
+- `POST /api/restock-orders` - Submit `{lines: [{item_sku, quantity}]}`; the server prices each line from the forecast data and sets lead time to the longest line. Stored in memory only (resets on restart)
 
 ## Common Issues
 1. Use unique keys in v-for (not `index`) - use `sku`, `month`, etc.

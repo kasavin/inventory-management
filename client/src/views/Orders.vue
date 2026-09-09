@@ -5,6 +5,60 @@
       <p>{{ t('orders.description') }}</p>
     </div>
 
+    <!-- Restock orders submitted from the Restocking tab. Loaded once on
+         mount, independent of the global filters and of loadOrders below,
+         so a failure here never blocks the customer orders section. -->
+    <div class="card submitted-orders-card">
+      <div class="card-header">
+        <h3 class="card-title">{{ t('orders.submittedOrders') }}</h3>
+      </div>
+      <div v-if="submittedOrdersLoading" class="loading">{{ t('common.loading') }}</div>
+      <div v-else-if="submittedOrdersError" class="error">{{ submittedOrdersError }}</div>
+      <div v-else-if="submittedOrders.length === 0" class="no-data">
+        {{ t('orders.noSubmittedOrders') }}
+      </div>
+      <div v-else class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ t('orders.table.orderNumber') }}</th>
+              <th>{{ t('orders.table.submittedDate') }}</th>
+              <th>{{ t('orders.table.items') }}</th>
+              <th>{{ t('orders.table.totalValue') }}</th>
+              <th>{{ t('orders.table.leadTime') }}</th>
+              <th>{{ t('orders.table.expectedDelivery') }}</th>
+              <th>{{ t('orders.table.status') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="order in submittedOrders" :key="order.id">
+              <td><strong>{{ order.order_number }}</strong></td>
+              <td>{{ formatDate(order.created_date) }}</td>
+              <td>
+                <details class="items-details">
+                  <summary class="items-summary">
+                    {{ t('orders.itemsCount', { count: order.lines.length }) }}
+                  </summary>
+                  <div class="items-dropdown">
+                    <div v-for="line in order.lines" :key="line.item_sku" class="item-entry">
+                      <span class="item-name">{{ translateProductName(line.item_name) }}</span>
+                      <span class="item-meta">{{ t('orders.quantity') }}: {{ line.quantity }}</span>
+                    </div>
+                  </div>
+                </details>
+              </td>
+              <td><strong>{{ formatCurrency(order.total_cost, currentCurrency) }}</strong></td>
+              <td>{{ t('orders.leadTimeDays', { days: order.lead_time_days }) }}</td>
+              <td>{{ formatDate(order.expected_delivery) }}</td>
+              <td>
+                <span class="badge info">{{ t('status.submitted') }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else>
@@ -83,6 +137,7 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { api } from '../api'
 import { useFilters } from '../composables/useFilters'
 import { useI18n } from '../composables/useI18n'
+import { formatCurrency } from '../utils/currency'
 
 export default {
   name: 'Orders',
@@ -95,6 +150,12 @@ export default {
     const loading = ref(true)
     const error = ref(null)
     const orders = ref([])
+
+    // Submitted (restock) orders - separate state from the customer orders
+    // above so they load/fail independently and never respond to filters.
+    const submittedOrders = ref([])
+    const submittedOrdersLoading = ref(true)
+    const submittedOrdersError = ref(null)
 
     // Use shared filters
     const {
@@ -129,6 +190,27 @@ export default {
       loadOrders()
     })
 
+    const loadSubmittedOrders = async () => {
+      try {
+        submittedOrdersLoading.value = true
+        submittedOrdersError.value = null
+        const data = await api.getRestockOrders()
+
+        // Backend contract says newest first already, but sort defensively
+        // (validating dates first) in case that changes or isn't live yet.
+        submittedOrders.value = [...data].sort((a, b) => {
+          const dateA = new Date(a.created_date)
+          const dateB = new Date(b.created_date)
+          if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) return 0
+          return dateB - dateA
+        })
+      } catch (err) {
+        submittedOrdersError.value = 'Failed to load submitted orders: ' + err.message
+      } finally {
+        submittedOrdersLoading.value = false
+      }
+    }
+
     const getOrdersByStatus = (status) => {
       return orders.value.filter(order => order.status === status)
     }
@@ -146,14 +228,31 @@ export default {
     const formatDate = (dateString) => {
       const { currentLocale } = useI18n()
       const locale = currentLocale.value === 'ja' ? 'ja-JP' : 'en-US'
-      return new Date(dateString).toLocaleDateString(locale, {
+
+      // Date-only strings ("YYYY-MM-DD", used by restock orders) are parsed
+      // by `Date` as UTC midnight, which renders as the previous day in
+      // negative-UTC-offset timezones. Build the local calendar date
+      // ourselves for those. Datetime strings (customer orders' e.g.
+      // "2025-01-08T10:19:00") already parse as local time, so leave those
+      // to the normal Date constructor.
+      const dateOnlyMatch = typeof dateString === 'string' && dateString.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      const date = dateOnlyMatch
+        ? new Date(Number(dateOnlyMatch[1]), Number(dateOnlyMatch[2]) - 1, Number(dateOnlyMatch[3]))
+        : new Date(dateString)
+
+      if (isNaN(date.getTime())) return 'N/A'
+
+      return date.toLocaleDateString(locale, {
         year: 'numeric',
         month: 'short',
         day: 'numeric'
       })
     }
 
-    onMounted(loadOrders)
+    onMounted(() => {
+      loadOrders()
+      loadSubmittedOrders()
+    })
 
     return {
       t,
@@ -164,8 +263,13 @@ export default {
       getOrderStatusClass,
       formatDate,
       currencySymbol,
+      currentCurrency,
       translateProductName,
-      translateCustomerName
+      translateCustomerName,
+      formatCurrency,
+      submittedOrders,
+      submittedOrdersLoading,
+      submittedOrdersError
     }
   }
 }
@@ -275,5 +379,16 @@ export default {
 .item-meta {
   font-size: 0.813rem;
   color: #64748b;
+}
+
+.submitted-orders-card {
+  border-left: 4px solid #3b82f6;
+}
+
+.no-data {
+  padding: 2rem;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.875rem;
 }
 </style>

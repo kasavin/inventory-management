@@ -6,6 +6,7 @@ export default {
     orders: '注文',
     finance: '財務',
     demandForecast: '需要予測',
+    restocking: '補充',
     companyName: '触媒コンポーネンツ',
     subtitle: '在庫管理システム'
   },
@@ -112,6 +113,9 @@ export default {
     onTimeDelivery: '定時配達',
     itemsCount: '{count}件',
     quantity: '数量',
+    submittedOrders: '提出済み補充注文',
+    noSubmittedOrders: 'まだ提出された補充注文はありません。',
+    leadTimeDays: '{days}日',
     table: {
       orderNumber: '注文番号',
       orderId: '注文ID',
@@ -125,7 +129,9 @@ export default {
       totalValue: '合計金額',
       status: 'ステータス',
       expectedDelivery: '予定配達日',
-      actualDelivery: '実際の配達日'
+      actualDelivery: '実際の配達日',
+      submittedDate: '提出日',
+      leadTime: 'リードタイム'
     }
   },
 
@@ -188,6 +194,43 @@ export default {
     }
   },
 
+  // Restocking
+  restocking: {
+    title: '補充',
+    description: '需要予測に基づき、予算に合う補充注文を提案します',
+    budget: '予算',
+    recommendedTotal: '推奨合計',
+    remaining: '残額',
+    lineCount: '品目数',
+    recommendedItems: '推奨品目',
+    excludedItems: 'この予算では{count}件の品目が対象外です',
+    noRecommendations: '推奨品目を表示するには予算を増やしてください。',
+    partial: '一部',
+    table: {
+      sku: 'SKU',
+      item: '品目',
+      trend: 'トレンド',
+      quantity: '数量',
+      unitCost: '単価',
+      lineTotal: '合計金額',
+      leadTime: 'リードタイム'
+    },
+    days: '{days}日',
+    placeOrder: '注文する',
+    confirmTitle: '補充注文の確認',
+    confirmMessage: '注文を送信する前に、以下の推奨品目をご確認ください。',
+    expectedDelivery: '予定配達日',
+    leadTime: 'リードタイム',
+    total: '合計',
+    cancel: 'キャンセル',
+    confirm: '確認',
+    submitting: '送信中...',
+    success: '補充注文{orderNumber}が送信されました。',
+    viewOrders: '注文で確認',
+    loadError: '需要予測の読み込みに失敗しました',
+    submitError: '補充注文の送信に失敗しました'
+  },
+
   // Filters
   filters: {
     timePeriod: '期間',
@@ -206,7 +249,8 @@ export default {
     backordered: 'バックオーダー',
     inStock: '在庫あり',
     lowStock: '在庫僅少',
-    adequate: '適量'
+    adequate: '適量',
+    submitted: '提出済み'
   },
 
   // Trends

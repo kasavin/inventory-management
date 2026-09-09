@@ -16,6 +16,7 @@ A full-stack demo application for a Claude Code workshop — inventory managemen
 - Inventory tracking across multiple warehouses
 - Order management with status tracking
 - Demand forecasting with trend analysis
+- Restocking: budget-based recommendations from the demand forecast, with submitted orders and delivery lead times
 - Backlog monitoring
 - Spending analytics
 
@@ -48,14 +49,16 @@ npm run dev
 
 ## API Endpoints
 
-All endpoints support optional filtering via query params: `warehouse`, `category`, `status`, `month`
+Orders and the dashboard summary accept optional `warehouse`, `category`, `status` and `month` query params; inventory accepts `warehouse` and `category`.
 
 - `GET /api/inventory` - Inventory items
 - `GET /api/orders` - Orders
-- `GET /api/demand` - Demand forecasts
+- `GET /api/demand` - Demand forecasts, with unit cost and lead time per item
 - `GET /api/backlog` - Backlog items
 - `GET /api/dashboard/summary` - Summary statistics
 - `GET /api/spending/*` - Spending data
+- `GET /api/restock-orders` - Submitted restocking orders, newest first
+- `POST /api/restock-orders` - Submit a restocking order (kept in memory until the server restarts)
 
 ## Demo Data
 

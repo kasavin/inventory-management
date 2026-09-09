@@ -6,6 +6,7 @@ export default {
     orders: 'Orders',
     finance: 'Finance',
     demandForecast: 'Demand Forecast',
+    restocking: 'Restocking',
     companyName: 'Catalyst Components',
     subtitle: 'Inventory Management System'
   },
@@ -112,6 +113,9 @@ export default {
     onTimeDelivery: 'On-Time Delivery',
     itemsCount: '{count} items',
     quantity: 'Qty',
+    submittedOrders: 'Submitted Orders',
+    noSubmittedOrders: 'No restock orders have been submitted yet.',
+    leadTimeDays: '{days} days',
     table: {
       orderNumber: 'Order Number',
       orderId: 'Order ID',
@@ -125,7 +129,9 @@ export default {
       totalValue: 'Total Value',
       status: 'Status',
       expectedDelivery: 'Expected Delivery',
-      actualDelivery: 'Actual Delivery'
+      actualDelivery: 'Actual Delivery',
+      submittedDate: 'Submitted Date',
+      leadTime: 'Lead Time'
     }
   },
 
@@ -188,6 +194,43 @@ export default {
     }
   },
 
+  // Restocking
+  restocking: {
+    title: 'Restocking',
+    description: 'Recommend restock orders that fit your budget, based on demand forecasts',
+    budget: 'Budget',
+    recommendedTotal: 'Recommended Total',
+    remaining: 'Remaining',
+    lineCount: 'Line Items',
+    recommendedItems: 'Recommended Items',
+    excludedItems: '{count} item(s) excluded at this budget',
+    noRecommendations: 'Increase the budget to get restock recommendations.',
+    partial: 'partial',
+    table: {
+      sku: 'SKU',
+      item: 'Item',
+      trend: 'Trend',
+      quantity: 'Quantity',
+      unitCost: 'Unit Cost',
+      lineTotal: 'Line Total',
+      leadTime: 'Lead Time'
+    },
+    days: '{days} days',
+    placeOrder: 'Place Order',
+    confirmTitle: 'Confirm Restock Order',
+    confirmMessage: 'Review the recommended lines below before submitting this restock order.',
+    expectedDelivery: 'Expected Delivery',
+    leadTime: 'Lead Time',
+    total: 'Total',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
+    submitting: 'Submitting...',
+    success: 'Restock order {orderNumber} submitted successfully.',
+    viewOrders: 'View in Orders',
+    loadError: 'Failed to load demand forecasts',
+    submitError: 'Failed to submit restock order'
+  },
+
   // Filters
   filters: {
     timePeriod: 'Time Period',
@@ -206,7 +249,8 @@ export default {
     backordered: 'Backordered',
     inStock: 'In Stock',
     lowStock: 'Low Stock',
-    adequate: 'Adequate'
+    adequate: 'Adequate',
+    submitted: 'Submitted'
   },
 
   // Trends
